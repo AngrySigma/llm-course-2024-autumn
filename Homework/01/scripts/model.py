@@ -25,7 +25,8 @@ class Model(nn.Module):
         >>> model = Model(vocab_size=10000, emb_size=128, num_layers=2, hidden_size=256, dropout=0.5)
         >>> input_data = torch.randint(0, 10000, (32, 50))  # Входные данные: батч из 32 последовательностей длиной 50
         >>> output, (h_n, c_n) = model(input_data)  # Прямое распространение
-        >>> print(output.shape)  # Результат: torch.Size([32, 50, 10000])
+        >>> print(output.shape)
+        torch.Size([32, 50, 10000])
     """
     def __init__(
             self,
@@ -36,9 +37,9 @@ class Model(nn.Module):
             dropout: float = 0.0
     ):
         super().__init__()
-        self.embeddings = nn.Embedding(<YOUR CODE HERE>)
-        self.lstm = nn.LSTM(<YOUR CODE HERE>)
-        self.logits = nn.Linear(<YOUR CODE HERE>)
+        self.embeddings = nn.Embedding(vocab_size, embedding_dim=emb_size)
+        self.lstm = nn.LSTM(input_size=emb_size, hidden_size=hidden_size, num_layers=num_layers, dropout=dropout, batch_first=True)
+        self.logits = nn.Linear(hidden_size, vocab_size)
 
     def forward(
             self,
@@ -57,4 +58,8 @@ class Model(nn.Module):
                 - Логиты (предсказания для каждого слова в последовательности) размером (batch_size, seq_len, vocab_size).
                 - Пара скрытых состояний (h_n, c_n), где h_n и c_n — это последние скрытые и клеточные состояния LSTM.
         """
-        <YOUR CODE HERE>
+        x = self.embeddings(x)
+        x, hx = self.lstm(x, hx)
+        x = self.logits(x)
+        return x, hx
+
