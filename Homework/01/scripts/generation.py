@@ -7,11 +7,11 @@ from scripts.tokenizer import ByteTokenizer
 
 
 def generate(
-        model: Model,
-        tokenizer: ByteTokenizer,
-        temperature: float = 1.0,
-        top_k: Optional[int] = None,
-        max_length: int = 1024
+    model: Model,
+    tokenizer: ByteTokenizer,
+    temperature: float = 1.0,
+    top_k: Optional[int] = None,
+    max_length: int = 1024,
 ) -> str:
     """
     Функция для генерации текста с использованием модели и токенизатора.

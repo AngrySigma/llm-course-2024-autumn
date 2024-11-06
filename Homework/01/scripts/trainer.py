@@ -52,18 +52,19 @@ class Trainer:
     >>> eval_loss = trainer.evaluate()  # Оценка модели
     >>> print(f"Потери на оценке: {eval_loss}")
     """
+
     def __init__(
-            self,
-            model: Model,
-            train_dataset: Union[Dataset, List[Tensor]],
-            eval_dataset: Union[Dataset, List[Tensor]],
-            n_epochs: int = 3,
-            lr: float = 1e-5,
-            train_batch_size: int = 1,
-            eval_batch_size: int = 1,
-            eval_steps: Optional[int] = None,
-            collator: Optional[Callable[[List[List[int]]], Tensor]] = None,
-            ignore_index: int = -100
+        self,
+        model: Model,
+        train_dataset: Union[Dataset, List[Tensor]],
+        eval_dataset: Union[Dataset, List[Tensor]],
+        n_epochs: int = 3,
+        lr: float = 1e-5,
+        train_batch_size: int = 1,
+        eval_batch_size: int = 1,
+        eval_steps: Optional[int] = None,
+        collator: Optional[Callable[[List[List[int]]], Tensor]] = None,
+        ignore_index: int = -100,
     ):
         self.model = model
         self.loss_func = nn.CrossEntropyLoss(ignore_index=ignore_index)
@@ -73,14 +74,14 @@ class Trainer:
             batch_size=train_batch_size,
             shuffle=True,
             drop_last=True,
-            collate_fn=collator
+            collate_fn=collator,
         )
         self.eval_loader = DataLoader(
             eval_dataset,
             batch_size=eval_batch_size,
             shuffle=False,
             drop_last=True,
-            collate_fn=collator
+            collate_fn=collator,
         )
         self.n_epochs = n_epochs
         self.eval_steps = eval_steps
@@ -96,7 +97,7 @@ class Trainer:
         Возвращает:
             Tensor: Значение потерь.
         """
-        return self.loss_func(logits.transpose(1,2), y)
+        return self.loss_func(logits.transpose(1, 2), y)
 
     def train(self) -> None:
         """
@@ -110,18 +111,22 @@ class Trainer:
                 iterations += 1
                 self.model.train()
                 # Готовим входы (текущие токены) и выходы (следующие токены)
-                x = ids[:,:-1]
+                x = ids[:, :-1]
                 y = ids[:, 1:]
                 # Получаем логиты и считаем лосс
                 logits, _ = self.model(x)
                 loss = self.calc_loss(logits, y)
                 progress_bar.update()
-                progress_bar.set_description(f'epoch={iterations / len(self.train_loader)}, loss={loss.item()}')
+                progress_bar.set_description(
+                    f"epoch={iterations / len(self.train_loader)}, loss={loss.item()}"
+                )
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
                 if self.eval_steps is not None and iterations % self.eval_steps == 0:
-                    print(f'epoch={iterations / len(self.train_loader)}, eval_loss={self.evaluate()}')
+                    print(
+                        f"epoch={iterations / len(self.train_loader)}, eval_loss={self.evaluate()}"
+                    )
 
     def evaluate(self) -> float:
         """
@@ -134,9 +139,9 @@ class Trainer:
         total_loss = 0.0
         for ids in self.eval_loader:
             # Готовим входы (текущие номера токенов) и выходы (следующие номера токенов)
-            x = ids[:,:-1]
+            x = ids[:, :-1]
             y = ids[:, 1:]
-            with (torch.no_grad()):
+            with torch.no_grad():
                 # Получаем логиты и считаем лосс
                 logits, _ = self.model(x)
                 loss = self.calc_loss(logits, y)

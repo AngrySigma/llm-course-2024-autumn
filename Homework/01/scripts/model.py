@@ -28,23 +28,28 @@ class Model(nn.Module):
         >>> print(output.shape)
         torch.Size([32, 50, 10000])
     """
+
     def __init__(
-            self,
-            vocab_size: int,
-            emb_size: int = 128,
-            num_layers: int = 1,
-            hidden_size: int = 256,
-            dropout: float = 0.0
+        self,
+        vocab_size: int,
+        emb_size: int = 128,
+        num_layers: int = 1,
+        hidden_size: int = 256,
+        dropout: float = 0.0,
     ):
         super().__init__()
         self.embeddings = nn.Embedding(vocab_size, embedding_dim=emb_size)
-        self.lstm = nn.LSTM(input_size=emb_size, hidden_size=hidden_size, num_layers=num_layers, dropout=dropout, batch_first=True)
+        self.lstm = nn.LSTM(
+            input_size=emb_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            dropout=dropout,
+            batch_first=True,
+        )
         self.logits = nn.Linear(hidden_size, vocab_size)
 
     def forward(
-            self,
-            x: Tensor,
-            hx: Optional[Tuple[Tensor, Tensor]] = None
+        self, x: Tensor, hx: Optional[Tuple[Tensor, Tensor]] = None
     ) -> Tuple[Tensor, Tuple[Tensor, Tensor]]:
         """
         Проводит прямое распространение через сеть.
@@ -62,4 +67,3 @@ class Model(nn.Module):
         x, hx = self.lstm(x, hx)
         x = self.logits(x)
         return x, hx
-

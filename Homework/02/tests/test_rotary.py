@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("Homework/02")
 import unittest
 
@@ -18,13 +19,11 @@ x = torch.rand(BATCH_SIZE, SEQ_LENGTH, N_HEADS, DIM_PER_HEAD)
 
 
 class TestRotary(unittest.TestCase):
-
     def test_rotary_embeddings(self):
         custom_rope = compute_rotary_embeddings(x)
 
         rpe = RotaryPositionalEmbeddings(dim=DIM_PER_HEAD, max_seq_len=SEQ_LENGTH)
         default_rope = rpe(x)
+        custom_rope = custom_rope.to(torch.float)
 
-        self.assertTrue(
-            torch.allclose(default_rope, custom_rope, atol=1e-5)
-        )
+        self.assertTrue(torch.allclose(default_rope, custom_rope, atol=1e-5))

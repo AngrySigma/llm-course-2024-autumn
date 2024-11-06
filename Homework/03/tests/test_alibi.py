@@ -1,11 +1,12 @@
 import pytest
 import torch
-
 from alibi import compute_alibi
 
 
 def _assert_sequence_equal(expected, actual):
-    assert len(expected) == len(actual), f"Unmatched sequence lengths: {len(expected)} vs. {len(actual)}"
+    assert len(expected) == len(
+        actual
+    ), f"Unmatched sequence lengths: {len(expected)} vs. {len(actual)}"
     for i, (elem1, elem2) in enumerate(zip(expected, actual)):
         assert elem1 == elem2, f"Difference at position {i}: {elem1} vs {elem2}"
 
@@ -23,7 +24,9 @@ def test_bias_symmetric(num_heads, seq_len):
     biases = compute_alibi(num_heads, seq_len)
     for head in range(num_heads):
         torch.testing.assert_close(
-            biases[head], -biases[head].T, msg=f"Biases asymmetrical about the diagonal for head {head}"
+            biases[head],
+            -biases[head].T,
+            msg=f"Biases asymmetrical about the diagonal for head {head}",
         )
 
 
@@ -38,7 +41,9 @@ def test_slope_computation():
 
 
 def test_alibi_computation():
-    relative_positions = torch.tensor([[0, 1, 2, 3], [-1, 0, 1, 2], [-2, -1, 0, 1], [-3, -2, -1, 0]])
+    relative_positions = torch.tensor(
+        [[0, 1, 2, 3], [-1, 0, 1, 2], [-2, -1, 0, 1], [-3, -2, -1, 0]]
+    )
     slopes = torch.tensor([2**-2, 2**-4, 2**-6, 2**-8]).view(-1, 1, 1)
     expected_bias = relative_positions * slopes
 

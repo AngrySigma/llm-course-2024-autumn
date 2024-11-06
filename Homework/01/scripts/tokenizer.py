@@ -58,10 +58,11 @@ class ByteTokenizer:
     >>> print(vocab_size)
     259
     """
+
     def __init__(self):
-        self.pad_token = b'<pad>'
-        self.bos_token = b'<bos>'
-        self.eos_token = b'<eos>'
+        self.pad_token = b"<pad>"
+        self.bos_token = b"<bos>"
+        self.eos_token = b"<eos>"
         self.pad_token_id = None
         self.bos_token_id = None
         self.eos_token_id = None
@@ -97,7 +98,7 @@ class ByteTokenizer:
         List[int]
             Список идентификаторов (байтов), представляющих символы строки.
         """
-        return list(text.encode('utf-8'))
+        return list(text.encode("utf-8"))
 
     def decode(self, ids: List[int]) -> str:
         """Преобразует список идентификаторов обратно в строку.
@@ -112,7 +113,9 @@ class ByteTokenizer:
         str
             Декодированная строка.
         """
-        text = b''.join(self.vocab[idx] for idx in ids).decode('utf-8', errors='replace')
+        text = b"".join(self.vocab[idx] for idx in ids).decode(
+            "utf-8", errors="replace"
+        )
         return text
 
     def get_vocab_size(self) -> int:
@@ -152,9 +155,6 @@ def count_pairs(data: List[List[int]]) -> Dict[Tuple[int, int], int]:
             pair = (lst[i], lst[i + 1])
             count[pair] = count.get(pair, 0) + 1
     return count
-
-
-
 
 
 def merge(numbers: List[int], pair: Tuple[int, int], idx: int) -> List[int]:
@@ -197,7 +197,6 @@ def merge(numbers: List[int], pair: Tuple[int, int], idx: int) -> List[int]:
     return numbers
 
 
-
 class BpeTokenizer(ByteTokenizer):
     """
     Класс для токенизации текста с использованием байтового представления и BPE (Byte Pair Encoding) алгоритма.
@@ -237,6 +236,7 @@ class BpeTokenizer(ByteTokenizer):
     >>> print(vocab_size)
     263
     """
+
     def __init__(self):
         """
         Инициализирует BpeTokenizer, добавляя словарь для хранения склеиваний пар токенов (merges).
@@ -276,14 +276,14 @@ class BpeTokenizer(ByteTokenizer):
         progress_bar = tqdm(range(max_vocab - len(self.vocab)))
 
         # Формируем исходный список номеров токенов для каждого текста (изначально это байты в кодировке utf-8)
-        list_of_ids = [list(text.encode('utf-8')) for text in texts]
+        list_of_ids = [list(text.encode("utf-8")) for text in texts]
 
         for _ in progress_bar:
             # Находим наиболее частотную пару токенов для склеивания в один токен
             cnt = count_pairs(list_of_ids)
             pair = max(cnt, key=cnt.get)
             freq = cnt[pair]
-            progress_bar.set_description(f'pair={pair}, freq={freq}')
+            progress_bar.set_description(f"pair={pair}, freq={freq}")
 
             if freq == 1:
                 break
@@ -312,12 +312,16 @@ class BpeTokenizer(ByteTokenizer):
             Список идентификаторов с учётом частотных пар токенов, объединённых алгоритмом BPE.
         """
         # Формируем исходный список номеров токенов для данного текста (изначально это байты в кодировке utf-8)
-        ids = list(text.encode('utf-8'))
+        ids = list(text.encode("utf-8"))
 
         # Последовательно применяем таблицу склеиваний в том порядке, в котором добавлялись токены в словарь
         while len(ids) > 1:
             cnt = count_pairs([ids])
-            pair = reduce(partial(max, key= lambda x:cnt.get(x) or 0), filter(lambda x: x in self.merges, cnt), None)
+            pair = reduce(
+                partial(max, key=lambda x: cnt.get(x) or 0),
+                filter(lambda x: x in self.merges, cnt),
+                None,
+            )
             if pair not in self.merges:
                 break
             idx = self.merges[pair]
