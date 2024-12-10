@@ -1,14 +1,19 @@
+import datasets
 from tqdm.auto import tqdm
+from scripts.compute_reward import compute_reward
 
-def eval_reward_model(reward_model, reward_tokenizer, test_dataset, target_label, device='cpu'):
+
+def eval_reward_model(
+    reward_model, reward_tokenizer, test_dataset, target_label, device="cpu"
+):
     """
-    Evaluate the performance of a reward model by comparing reward scores for chosen and rejected reviews. 
+    Evaluate the performance of a reward model by comparing reward scores for chosen and rejected reviews.
 
     This function selects reviews from a test dataset based on a target label and evaluates the reward model's
     ability to assign higher scores to chosen reviews compared to rejected ones. The evaluation is performed
     in batches for efficiency.
-    Note that reward scores are compared on corresponding chosen and rejected reviews: 
-        chosen_reviews[0] vs rejected_reviews[0], 
+    Note that reward scores are compared on corresponding chosen and rejected reviews:
+        chosen_reviews[0] vs rejected_reviews[0],
         chosen_reviews[1] vs rejected_reviews[1],
         etc.
 
@@ -29,10 +34,50 @@ def eval_reward_model(reward_model, reward_tokenizer, test_dataset, target_label
     >>> print(f"Model accuracy: {accuracy:.2%}")
     """
 
-    raise NotImplementedError
+    if not isinstance(test_dataset, datasets.Dataset):
+        test_dataset = datasets.Dataset.from_list([item for item in test_dataset])
 
-    # <YOUR CODE HERE>
+    chosen_reviews = test_dataset.filter(lambda x: x["label"] == target_label)
+    rejected_reviews = test_dataset.filter(lambda x: x["label"] != target_label)
 
     assert len(chosen_reviews) == len(rejected_reviews)
 
-    # <YOUR CODE HERE>
+    batch_size = 16
+    num_batches = len(chosen_reviews) // batch_size
+    correct = 0
+
+    for i in tqdm(range(num_batches)):
+        chosen_texts = [
+            chosen_reviews[i * batch_size + j]["text"] for j in range(batch_size)
+        ]
+        rejected_texts = [
+            rejected_reviews[i * batch_size + j]["text"] for j in range(batch_size)
+        ]
+
+        rewards = compute_reward(
+            reward_model, reward_tokenizer, chosen_texts + rejected_texts
+        )
+
+        for j in range(batch_size):
+            if rewards[j] > rewards[j + batch_size]:
+                correct += 1
+
+    if len(chosen_reviews) % batch_size:
+        chosen_texts = [
+            chosen_reviews[num_batches * batch_size + j]["text"]
+            for j in range(len(chosen_reviews) % batch_size)
+        ]
+        rejected_texts = [
+            rejected_reviews[num_batches * batch_size + j]["text"]
+            for j in range(len(chosen_reviews) % batch_size)
+        ]
+
+        rewards = compute_reward(
+            reward_model, reward_tokenizer, chosen_texts + rejected_texts
+        )
+
+        for j in range(len(chosen_reviews) % batch_size):
+            if rewards[j] > rewards[j + len(chosen_reviews) % batch_size]:
+                correct += 1
+
+    return correct / len(chosen_reviews)

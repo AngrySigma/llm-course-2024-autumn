@@ -1,9 +1,14 @@
+from scripts.compute_reward import compute_reward
+
+
 def generate_with_reward_guidance(
-        main_model, main_tokenizer,
-        reward_model, reward_tokenizer,
-        N=16,
-        device='cpu',
-    ):
+    main_model,
+    main_tokenizer,
+    reward_model,
+    reward_tokenizer,
+    N=16,
+    device="cpu",
+):
     """
     Generate text samples using a main model and select the best sample based on a reward model's guidance.
 
@@ -23,6 +28,14 @@ def generate_with_reward_guidance(
     str: The generated text sample with the highest reward score.
     """
 
-    # <YOUR CODE HERE>
+    inputs = main_tokenizer(["It was"] * N, return_tensors="pt").to(device)
+    generated_ids = main_model.generate(**inputs, max_new_tokens=50, do_sample=True)
+    samples = [
+        main_tokenizer.decode(candidate.flatten().cpu().numpy().tolist())
+        for candidate in generated_ids
+    ]
 
-    raise NotImplementedError
+    rewards = compute_reward(reward_model, reward_tokenizer, samples)
+    best_sample = samples[rewards.argmax()]
+
+    return best_sample
